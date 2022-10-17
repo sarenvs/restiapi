@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Built-By: vhari
+Build-Jdk: 17.0.4.1
+Implementation-Title: spring-boot-crud-example
+Implementation-Version: 0.0.1-SNAPSHOT
+Implementation-Vendor-Id: com.codereveal
+Implementation-Vendor: Pivotal Software, Inc.
+Implementation-URL: https://spring.io/projects/spring-boot/spring-boot-c
+ rud-example
+Created-By: Maven Integration for Eclipse
+
