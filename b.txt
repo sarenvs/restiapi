@@ -1,0 +1,2 @@
+git push -d <remote_name> <branchname>
+git branch -d <branchname>
