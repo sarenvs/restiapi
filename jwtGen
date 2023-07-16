@@ -1,0 +1,191 @@
+import com.nimbusds.jose.shaded.gson.Gson;
+import com.nimbusds.jose.shaded.gson.JsonObject;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import org.apache.commons.lang3.time.DateUtils;
+
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Base64;
+import java.util.Date;
+
+public class JwtGen {
+
+    public static String encode() {
+
+        String retStr = null;
+
+        String rsaPrivateKey = "-----BEGIN PRIVATE KEY-----" +
+                "MIIJQQIBADANBgkqhkiG9w0BAQEFAASCCSswggknAgEAAoICAQCX9kxplqdmA7xK" +
+                "HkbHVfJLCaMtBrrZir6FtGy96BVOrjxa2IkFoVkmMSz/AjQpLxBuUSCDEMjZXKwC" +
+                "S+m3NY96cYqL4Yak5aEUv1xTtvnr55vNNBtQ0xHyhO95QqAk8FDDiUdI4xUL7Kth" +
+                "wNoUHcBzt9kDtLsIH+fUnwust51AWixZHj1y15u1oYLkzJhisn+WVqWBSWCc2Khp" +
+                "tHIzlnkbSzRQgsgCHlVj+xhcJZ6CTH7bPP/Schti3zZgBTZR8Omrj2CfqE69tbzb" +
+                "OyAxV/dVoPGS8VXERVxh/H/zR/WZhyyBzcfxK8PHiu2cBpaYzS+PpdE7WuYs+4LS" +
+                "M2dZ4AN8PFSC8uHBVKcdiyjIx2UT/7qMsmt2n0YBXWWM700X6s2pVu3zHtJP9pDN" +
+                "RiJa8hR7EoPUGeFYzd1a/S9c1PUERv6I5DhG/TIk219TOIk2ffLOyzz8UygYGhSQ" +
+                "46C/JXxZYAvrwfODqDyMb6PjykHN9e0e1uUfOIwjjdg7tIF6mtcp5YTvhpJoXqS6" +
+                "lpkRCnv1pPCwJr+eB7fC6vi6AFhnsdORVsV62GI1rU0VtXjWQiXPqb1xxybTDf21" +
+                "aW2JVA8yLkrAmxuSGxRQUW4D8ag7VcJeCTXVoHjlMtWFK/XNJIJ+RNgrrsIkrjoW" +
+                "dnceZdhJ6p8b0TmEL9ZR8jcDgPoxrQIDAQABAoICACPXKmSI7MhpvyH4DBd9lNzP" +
+                "1BWNjco7J/5e9HrB3yykeYWvpnmWeXFBjexDN8wy1nw+VB21ermRWtxbzS6xyjpF" +
+                "xziAo4IGyrwa+gqgkEdsY9m9HWgtsAD0C4sdBKpRp6rGmPJ+5HrggfdXRdgSwE5K" +
+                "oTt3h9k9tS73qAg/ci44Vldag4GvioEHK9kMzDATC3aIzxY0GT5E90ufDIRQTBX8" +
+                "4cTPY57kSp1/Hlq1YLI4mn7Y3zliQkVKggeZkxs2Z9ZXxaFCT/f8giNuyYP5zFL8" +
+                "150hoGnfNg/CPudBJJLmR8ABqdOez9kjUjFHeINneX02zadjJACd/VfYWdrfs9Jf" +
+                "HyuklIigGip3DedBgQIPhdUScWEdydRcKulbsKzCH5sJ9zSaoUR9hwGdPHs1CgkU" +
+                "1+9Vj8E2LHlRq9qk3kYf2PfPE/Rett6n0bZN1VlLZqz3BVJFrEnW4rTr3sl1fnKZ" +
+                "+30/BvGWMzWpn9RmSs4uKn0Cw/Bk5PZHSR688ii1PyfrI7czmNCNbHCiTLJTM6hk" +
+                "fdls+/1MpcClMa8U4eFTnfff4u+5SM9G+jZbFagiKAulhlhx+KyqbGDoXDODT6ul" +
+                "m8SHkL+Ac5A2v1MDI5pYL8L+yC5MsUSZvovaEpsXJn/a6lQuzwKNOjaZPypUA4Y1" +
+                "Pkgf/IlE42Yxq8LTcgV9AoIBAQC3zj4BDMC2HLnOclIytRFodPu+8oxn6d1hWaO9" +
+                "u2yecZc4aOE5BujB+f0IgpEaLj3iobiRqiHVHWqNtyTNgwSI0v5kPTqB27Ao5fsk" +
+                "Mn9Y84iDxkxTdR8UUffhp1REWZwuFGaR5/jyYDxRmnWgTVX8B9qixngIin077Liz" +
+                "hTzgH/zM6V/XNOsnMUKl97/RAyZy3fJ96sXy4UrWrFd2fn7i++8eQRpA/2PeM7Xk" +
+                "S5CrLJiu1CDaBlo4Jq0XyC6XTN0ZERMyrZG1NbxV0W2Ir7HAtGso3qz03fc0mCqv" +
+                "QT2P0cjAwkCaFQwO8XJrbQPw0FMYbEbKgULjVH3ah+hYHlvHAoIBAQDTpiv5Igu4" +
+                "z73/L9MwbtQ5kLcOS5/7dK7fyYE9dcVrhgDV5Bw38c8A24bzE6IAwQWjzQmjBzi6" +
+                "e0f/KMgsZYtgLcQaILhV2pC97co7mLrPEthHZIOYkwhW6/1QjLLWRcQpI0YC6Qhq" +
+                "BrbSTo9ea5NFW523qBUhHHo2ChW+JHnkhT0fkd3nC+9bxZUTtAFp3dhAqQ9DezBY" +
+                "wgsNUf6xYrEvLdTFSAPXDvCeMyOs32B03oUcTPh6w4PdMVtIXo29c6FMBbhIoDu0" +
+                "ExGeHB6XofFhWI7Q2h0lLZC/mXY8I4YpOcsSqlzPbUsIgaq6AVDgjfbXbI+54JiX" +
+                "LKo48P+UkH7rAoIBAANPN1aVgDLHOaE59bjsAbA7yvyZKWYFk/LYxlX4NfB0YyCk" +
+                "4slAEpjLg37PuwUZqAuYldYplgpcSTrb/VGl9kLwaZwsbg1Ag195JJh2QEy9tcuJ" +
+                "mn42MaUQBMKPXLkOU/2QaHhgEN9sVCmz+kI0okOzcIBVynt84txdWsYAtCPk74xQ" +
+                "92TMkx9Vh7mtSErfH6YZ0O/rdjz1SX+sArcjd+1mU9vbmDlrX8T0cWX25lfuqaEc" +
+                "OKs0ShOQvrUa6ZvXynNVF19mOKVmnkl9R9eaMj0iAnvt5ndSN80+oCYfqpgYUuEF" +
+                "nlwn3Nu4BTNh9xwy5AwghvXGdgnZz5pLsCdGBKkCggEAKy8wsbico6zfm33qnWs/" +
+                "qi846pXLoscAF3FKCXxKN9IzwXC1wUR5dDdWpapP18+Kkw129ei3TnVxD0MG9OgT" +
+                "NCCibqJWek4KUnZ+WQKkuzOhJZAAudTmUrX8Db9njgjWKX6k/lsF+Hw+OVMGNcHF" +
+                "XtV+rMaC6SqiVPxhy1Yt+M6m1hYxLL9mq1b5P/fugedeBHN6Rc6Q4stU7fbY/OCi" +
+                "Pnofe9Fh1zOZLO5KTS+WwsHUbx3VZVcXRL6ZXX7NdOZu9tAD9e2bwPZTFeuu4kmM" +
+                "sswa98pJQBi3/CAX29Vzvl2obbqNDVXDhYzPhPxXwDm3L+VavhZxjAb1BIFH5MxG" +
+                "2QKCAQBt7gr+Q3upd9E2L2fKetkP18WAw3FgQovkZu3TCgbvn/khenwYDpILpFWi" +
+                "omn2mpD1y59CXFuFmYiTIFGy1EKzS4DCJeAvKeWUjLQD61Wey23gwVltW04kt7D0" +
+                "ciX1jMf84RauUT+Oyd1BntFS8FV5ni2EyeMZqtVJ6Psx0a3aiv/CTih697sBrChz" +
+                "WklqyW78nA+besM55hBx5/dQJcaVRDQcJulno8kOa11CtIP0mEgia5HHuMMgbypE" +
+                "CbdDI8HUPx4uoUnQM9Cl6JoU3T8fzb3Q9fzf8qXKmSl6toPbIHprxq7xfFiKFdZI" +
+                "5JlHt2WsRX51rZGbM1nFStLNL/zd" +
+                "-----END PRIVATE KEY-----";
+
+        rsaPrivateKey = rsaPrivateKey.replace("-----BEGIN PRIVATE KEY-----", "");
+        rsaPrivateKey = rsaPrivateKey.replace("-----END PRIVATE KEY-----", "");
+        rsaPrivateKey = rsaPrivateKey.replaceAll("\n", "");
+
+        Claims claims = Jwts.claims();
+        claims.put("iss", "clm-order-api");
+        claims.put("sub", "clm-order-api");
+        claims.put("aud", new String[] {"https://app01.int.tsg.hmhco.com/edcore/eds-core-app/token"});
+
+        // strip the headers
+        rsaPrivateKey = rsaPrivateKey.replace("-----BEGIN RSA PRIVATE KEY-----", "");
+        rsaPrivateKey = rsaPrivateKey.replace("-----END RSA PRIVATE KEY-----", "");
+        rsaPrivateKey = rsaPrivateKey.replaceAll("\\s+","");
+
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(rsaPrivateKey));
+
+        try {
+
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.RS256;
+            Date issuedDate = new Date();
+            retStr = Jwts.builder()
+                    .setClaims(claims)
+                    .signWith(signatureAlgorithm, kf.generatePrivate(keySpec))
+                    .setIssuedAt(issuedDate)
+                    .setExpiration(DateUtils.addSeconds(issuedDate, 3600))
+                    .compact();
+
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeySpecException e) {
+            e.printStackTrace();
+        }
+        return retStr;
+    }
+
+    public static String httpGetToken(String jwt) {
+        String token = null;
+        try {
+            Client client = Client.create();
+
+            WebResource webResource = client
+                    .resource("https://app01.int.tsg.hmhco.com/edcore/eds-core-app/token");
+
+            ClientResponse response = webResource.accept("application/json")
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .post(ClientResponse.class, "grant_type=client_credentials&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_assertion="+jwt);
+
+            if (response.getStatus() != 200) {
+                throw new RuntimeException("Failed : HTTP error code : "
+                        + response.getStatus());
+            }
+
+            String output = response.getEntity(String.class);
+            JsonObject convertedObject = new Gson().fromJson(output, JsonObject.class);
+            token = "Bearer "+convertedObject.get("access_token").getAsString();
+
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        return token;
+    }
+
+    public static void hcpProductExists(String bearerToken) {
+         try {
+            Client client = Client.create();
+
+            WebResource webResource = client
+                    .resource("https://app01.int.tsg.hmhco.com/edcore/eds-core-app/v2/productbundle/ISBN/9780000632006");
+
+            ClientResponse response = webResource.accept("application/json")
+                    .header("Authorization", bearerToken)
+                    .get(ClientResponse.class);
+
+            if (response.getStatus() != 200) {
+                throw new RuntimeException("Failed : HTTP error code : "
+                        + response.getStatus());
+            }
+
+            String hcpProductResponse = response.getEntity(String.class);
+            JsonObject convertedObject = new Gson().fromJson(hcpProductResponse, JsonObject.class);
+             String messageId =
+                     convertedObject.get("response")
+                             .getAsJsonObject()
+                             .get("infos")
+                             .getAsJsonArray()
+                             .get(0)
+                             .getAsJsonObject()
+                             .get("messageId").getAsString();
+             String messageText =
+                     convertedObject.get("response")
+                             .getAsJsonObject()
+                             .get("infos")
+                             .getAsJsonArray()
+                             .get(0)
+                             .getAsJsonObject()
+                             .get("messageText").getAsString();
+             if(messageId.equalsIgnoreCase("1")
+                     && messageText.equalsIgnoreCase("Product bundle Found as expected.")) {
+                 System.out.println("Product Exists in HCP");
+             } else {
+                 System.out.println("Product doesn't Exists in HCP");
+             }
+             System.out.println( messageId + "  " + messageText);
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main (String args[]) {
+        //System.out.println(httpGetToken(encode()));
+        hcpProductExists(httpGetToken(encode()));
+    }
+
+}
